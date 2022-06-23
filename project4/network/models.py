@@ -5,14 +5,14 @@ from datetime import datetime
 from django.forms import IntegerField
 
 class User(AbstractUser):
-    followers = models.ManyToManyField("self", on_delete=models.DO_NOTHING, related_name="following")  # is this correct?
+    followers = models.ManyToManyField("self", related_name="following")  # is this correct?
     num_followers = IntegerField()
     num_following = IntegerField()
 
 class Post(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name = "posts")
     body = models.TextField()
-    datetime_posted = models.DateTimeField(defult=datetime.now())
+    datetime_posted = models.DateTimeField(default=datetime.now())
     like_count = models.IntegerField(default=0)
     
     def serialize(self):
