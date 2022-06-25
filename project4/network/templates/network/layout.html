@@ -1,16 +1,19 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="en">
     <head>
+        <link rel="shortcut icon" href="#" /> <!-- this gets rid of that annoying favicon.io error -->
         <title>{% block title %}Social Network{% endblock %}</title>
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
         <link href="{% static 'network/styles.css' %}" rel="stylesheet">
+        <script src="{% static 'network/layout.js' %}"></script>
+        {% block script %}
+        {% endblock %}
     </head>
     <body>
 
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <a class="navbar-brand" href="#">Network</a>
+            <a class="navbar-brand" href="#">FaceBen</a>
           
             <div>
               <ul class="navbar-nav mr-auto">
@@ -19,12 +22,14 @@
                         <a class="nav-link" href="#"><strong>{{ user.username }}</strong></a>
                     </li>
                 {% endif %}
+
                 <li class="nav-item">
-                  <a class="nav-link" href="{% url 'index' %}">All Posts</a>
+                    <button class="nav-link bg-light" id="all_posts_button" style="border:none;">All Posts </button>
                 </li>
+
                 {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Following</a>
+                        <button class="nav-link bg-light" id="following_button" style="border:none;">Following </button>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'logout' %}">Log Out</a>
@@ -45,11 +50,11 @@
           </nav>
         
         <div class="body">
+            <div id="posts"></div>
             {% block body %}
             {% endblock %}
         </div>
 
-        {% block script %}
-        {% endblock %}
+        
     </body>
 </html>

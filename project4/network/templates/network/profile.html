@@ -1,0 +1,35 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block script %}
+    <script src="{% static 'network/profile.js' %}"> </script>
+{% endblock %}
+
+
+
+{% block body %}
+    <div id="info"><p>{{users_profile.username}} has {{users_profile.num_followers}} followers and is following {{users_profile.num_following}} people.</p></div>
+    
+    {% if viewing_user.is_authenticated and viewing_user.id != users_profile.id %}
+        {% if following %}
+            <form action="../unfollow/{{users_profile.id}}">
+                {% csrf_token %}
+                <input type="submit" value="unfollow">
+            </form>
+        {% else %}
+            <form action="../follow/{{users_profile.id}}">
+                {% csrf_token %}
+                <input type="submit" value="follow">
+            </form>
+        {% endif %}
+    {% endif %}
+    
+    
+    <div id="profile_posts">
+        <h5>posts: </h5>
+        {% for post in posts %}
+            <p> {{post.body}}. posted at {{post.datetime_posted}} {{post.like_count}} likes. </p>
+        {% endfor %}
+    </div>
+{% endblock %}
+
