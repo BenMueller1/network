@@ -2,6 +2,7 @@ var posts_div = document.querySelector('#posts')
 let post_index = 0;
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('page load')
     allPostsBtn = document.querySelector('#all_posts_button');
     posts_div = document.querySelector('#posts')
      // this will only work properly when I transfer this code to the layout.js
@@ -55,14 +56,30 @@ async function load_following_posts() {
             let d = document.createElement('div');
             d.id = `post-${post['id']}`
             d.innerHTML = `<p> <a href="profile/${post["user_id"]}">${post['user']}</a>
-                                : ${post['body']}, posted at ${post['datetime_posted']}. ${post['like_count']} likes. </p>`;                   
+                                : ${post['body']}, posted at ${post['datetime_posted']}. ${post['like_count']} likes.  
+                            </p>`;
+            if (usr["id"] === post["user_id"]) { // add edit button if current user created this post
+                d.innerHTML += `<button id="edit__post_${post['id']}_button"> Edit</button>`
+                console.log('tst')
+                // now add event listener to the edit button
+                d.querySelector(`#edit__post_${post['id']}`).addEventListener("click", () => {
+                    console.log('is this called?')
+                    // form should be autofilled w current body (how to do csrf?), change url to PUT req url from my api
+                    d.innerHTML = `<form action="">
+                                        <input type="text" placeholder="${post['body']}" name="edit-${post['id']}">
+                                        <input type="submit value="change">
+                                    </form>`
+                }) 
+            }
+                              
             posts_div.append(d)
         })
     })
 }
 
 
-function load_ten_posts(first_post_index) {
+async function load_ten_posts(first_post_index) {
+    var usr = await fetch('/getUser').then(response => response.json())
     last_post_index = first_post_index+9; //inclusive
     posts_div = document.querySelector('#posts')
     fetch('/getAllPosts')
@@ -74,8 +91,17 @@ function load_ten_posts(first_post_index) {
                 let d = document.createElement('div');
                 d.id = `post-${post['id']}`
                 d.innerHTML = `<p> <a href="profile/${post["user_id"]}">${post['user']}</a>
-                                    : ${post['body']}, posted at ${post['datetime_posted']}. ${post['like_count']} likes. </p>`;                   
-                posts_div.append(d)
+                                    : ${post['body']}, posted at ${post['datetime_posted']}. ${post['like_count']} likes.
+                                </p>`;
+                if (usr["id"] === post["user_id"]) { // add edit button if current user created this post
+                    d.innerHTML += `<button id="edit__post_${post['id']}_button"> Edit</button>`
+                    posts_div.append(d)
+                    // now add event listener to the edit button
+                    d.querySelector(`#edit__post_${post['id']}_button`).addEventListener("click", () => edit_post(d, post)) 
+                }
+                else {
+                    posts_div.append(d)
+                }
             })
         } else {
             let p = document.createElement('p');
@@ -84,4 +110,35 @@ function load_ten_posts(first_post_index) {
         }
     })
     post_index += 10; 
+}
+
+
+
+
+function edit_post(d, post) {
+    d.innerHTML = `<form >
+                        <input type="text" value="${post['body']}" name="edit-${post['id']}" id="new_body_text_for_${post['id']}">
+                        <input id="submit_edit_${post['id']}" type="button" value="submit">
+                    </form>`
+    d.querySelector(`#submit_edit_${post['id']}`).addEventListener("click", () => {
+        var new_body = d.querySelector(`#new_body_text_for_${post['id']}`).value
+        fetch(`update/${post['id']}`, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                new_body: new_body
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            d.innerHTML = `<p> <a href="profile/${post["user_id"]}">${post['user']}</a>
+                            : ${result['body']}, posted at ${post['datetime_posted']}. ${post['like_count']} likes.
+                            </p>`;
+            d.innerHTML += `<button id="edit__post_${post['id']}_button">Edit</button>`
+            d.querySelector(`#edit__post_${post['id']}_button`).addEventListener("click", () => edit_post(d, post))
+        })
+    })
 }

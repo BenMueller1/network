@@ -4,6 +4,7 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django import forms
+from django.views.decorators.csrf import csrf_exempt
 from urllib3 import HTTPResponse
 
 from .models import User, Post, Like
@@ -155,3 +156,20 @@ def get_following_posts(request, user_id):
             filtered_posts.append(post)
     # error: filtered_posts is empty, this shouldn't be the case
     return JsonResponse([post.serialize() for post in filtered_posts], safe=False)
+
+
+
+@csrf_exempt  # find a way to remove this later (without this we get a 403 forbidden)
+def update_post(request, post_id):
+    if request.method != "POST":
+        return HttpResponse("ERROR: update_post api should only be called with a POST request")
+    
+    # since the POST request sends JSON data, i need to deserialize it to work with it in python
+    data = json.loads(request.body)
+
+    post = Post.objects.filter(id=post_id)[0]
+    post.body = data["new_body"]  # this line is causing the error
+    post.save()
+
+    # am i allowed to return something even though it is a post request? Answer: Yes
+    return JsonResponse(post.serialize())

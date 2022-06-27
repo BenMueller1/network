@@ -16,5 +16,6 @@ urlpatterns = [
     path("follow/<int:followee_id>", views.follow, name="follow"),
     path("unfollow/<int:unfollowee_id>", views.unfollow, name="unfollow"),
     path("getUser", views.get_user, name="get_user"),
-    path("getAllPostsFollowedBy/<int:user_id>", views.get_following_posts, name="get_following_posts")
+    path("getAllPostsFollowedBy/<int:user_id>", views.get_following_posts, name="get_following_posts"),
+    path("update/<int:post_id>", views.update_post, name="update_post")
 ]
