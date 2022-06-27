@@ -139,12 +139,18 @@ def unfollow(request, unfollowee_id):
 
 
 def get_user(request):
+    # this is causing an error
     username = request.user.username
     id = request.user.id
+    liked_posts = [like.post for like in request.user.likes.all()]
+    liked_post_ids = [post.id for post in liked_posts]
+    js_liked_post_ids = json.dumps(liked_post_ids)
     return JsonResponse({
         "username": username,
-        "id": id
+        "id": id,
+        "liked_post_ids": js_liked_post_ids
     })
+
 
 def get_following_posts(request, user_id):
     user = User.objects.filter(id=user_id)[0]
@@ -158,7 +164,6 @@ def get_following_posts(request, user_id):
     return JsonResponse([post.serialize() for post in filtered_posts], safe=False)
 
 
-
 @csrf_exempt  # find a way to remove this later (without this we get a 403 forbidden)
 def update_post(request, post_id):
     if request.method != "POST":
@@ -170,6 +175,44 @@ def update_post(request, post_id):
     post = Post.objects.filter(id=post_id)[0]
     post.body = data["new_body"]  # this line is causing the error
     post.save()
+
+    # am i allowed to return something even though it is a post request? Answer: Yes
+    return JsonResponse(post.serialize())
+
+
+
+@csrf_exempt  # find a way to remove this later (without this we get a 403 forbidden)
+def like_post(request, post_id):
+    if request.method != "POST":
+        return HttpResponse("ERROR: like_post api should only be called with a POST request")
+    
+    usr = request.user   # can I do this? or do I have tyo send the user form js
+    post = Post.objects.filter(id=post_id)[0]
+
+    # only add a like if the user hasn't already liked the post
+    if len(Like.objects.filter(user=usr, post=post)) == 0:
+        like = Like(user=usr, post=post)
+        post.like_count += 1
+        like.save()
+        post.save()
+
+    # am i allowed to return something even though it is a post request? Answer: Yes
+    return JsonResponse(post.serialize())
+
+
+@csrf_exempt  # find a way to remove this later (without this we get a 403 forbidden)
+def unlike_post(request, post_id):
+    if request.method != "POST":
+        return HttpResponse("ERROR: like_post api should only be called with a POST request")
+    
+    usr = request.user   # can I do this? or do I have tyo send the user form js
+    post = Post.objects.filter(id=post_id)[0]
+
+    # only remove like if user has already liked post
+    if len(Like.objects.filter(user=usr, post=post)) == 1:
+        Like.objects.filter(user=usr, post=post).delete()
+        post.like_count -= 1
+        post.save()
 
     # am i allowed to return something even though it is a post request? Answer: Yes
     return JsonResponse(post.serialize())

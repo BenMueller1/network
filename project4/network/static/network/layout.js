@@ -2,7 +2,6 @@ var posts_div = document.querySelector('#posts')
 let post_index = 0;
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('page load')
     allPostsBtn = document.querySelector('#all_posts_button');
     posts_div = document.querySelector('#posts')
      // this will only work properly when I transfer this code to the layout.js
@@ -41,8 +40,8 @@ document.addEventListener('DOMContentLoaded', function() {
             })
         }
     }
-    
 
+    allPostsBtn.click()
 });
 
 async function load_following_posts() {
@@ -58,21 +57,7 @@ async function load_following_posts() {
             d.innerHTML = `<p> <a href="profile/${post["user_id"]}">${post['user']}</a>
                                 : ${post['body']}, posted at ${post['datetime_posted']}. ${post['like_count']} likes.  
                             </p>`;
-            if (usr["id"] === post["user_id"]) { // add edit button if current user created this post
-                d.innerHTML += `<button id="edit__post_${post['id']}_button"> Edit</button>`
-                console.log('tst')
-                // now add event listener to the edit button
-                d.querySelector(`#edit__post_${post['id']}`).addEventListener("click", () => {
-                    console.log('is this called?')
-                    // form should be autofilled w current body (how to do csrf?), change url to PUT req url from my api
-                    d.innerHTML = `<form action="">
-                                        <input type="text" placeholder="${post['body']}" name="edit-${post['id']}">
-                                        <input type="submit value="change">
-                                    </form>`
-                }) 
-            }
-                              
-            posts_div.append(d)
+            posts_div.append(d)           
         })
     })
 }
@@ -93,6 +78,18 @@ async function load_ten_posts(first_post_index) {
                 d.innerHTML = `<p> <a href="profile/${post["user_id"]}">${post['user']}</a>
                                     : ${post['body']}, posted at ${post['datetime_posted']}. ${post['like_count']} likes.
                                 </p>`;
+                
+                if (usr["id"] !== post["user_id"]) {
+                    if (usr['liked_post_ids'].includes(post['id'])) { // if post already liked, display an unlike button
+                        d.innerHTML += `<button id="like__post_${post['id']}_button">Unlike</button>`
+                        d.querySelector(`#like__post_${post['id']}_button`).addEventListener("click", () => like_post(d, post, "unlike"))
+                    }
+                    else {
+                        d.innerHTML += `<button id="like__post_${post['id']}_button">Like</button>`
+                        d.querySelector(`#like__post_${post['id']}_button`).addEventListener("click", () => like_post(d, post, "like"))
+                    } 
+                }
+                
                 if (usr["id"] === post["user_id"]) { // add edit button if current user created this post
                     d.innerHTML += `<button id="edit__post_${post['id']}_button"> Edit</button>`
                     posts_div.append(d)
@@ -141,4 +138,34 @@ function edit_post(d, post) {
             d.querySelector(`#edit__post_${post['id']}_button`).addEventListener("click", () => edit_post(d, post))
         })
     })
+}
+
+
+async function like_post(d, post, like_or_unlike) {
+    // do i need to send the user? or can I just use request.user in my django code
+    var usr = await fetch('/getUser').then(response => response.json())
+    // does it need to be a POST request if it doesn't send any data?
+    fetch(`/${like_or_unlike}/${post['id']}`, {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(result => {
+        d.innerHTML = `<p> <a href="profile/${post["user_id"]}">${post['user']}</a>
+                        : ${post['body']}, posted at ${post['datetime_posted']}. ${result['like_count']} likes.
+                        </p>`;
+
+        if (like_or_unlike === "like") { // if post already liked, display an unlike button
+            // ERROR: this is only being reached on the second click
+            d.innerHTML += `<button id="like__post_${post['id']}_button">Unlike</button>`
+            d.querySelector(`#like__post_${post['id']}_button`).addEventListener("click", () => like_post(d, post, "unlike"))
+        }
+        else if (like_or_unlike === "unlike") {
+            d.innerHTML += `<button id="like__post_${post['id']}_button">Like</button>`
+            d.querySelector(`#like__post_${post['id']}_button`).addEventListener("click", () => like_post(d, post, "like"))
+        } 
+    })    
 }
