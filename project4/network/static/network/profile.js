@@ -23,7 +23,7 @@ async function load_profile_posts(posts_div, user_id) {
                 d.innerHTML += `<button id="edit__post_${post['id']}_button"> Edit</button>`
                 d.querySelector(`#edit__post_${post['id']}_button`).addEventListener("click", () => edit_post(d, post)) 
             }
-            else {  // we shuold show like / unlike button
+            else {  // we shuold show like or unlike button
                 if (viewing_user['liked_post_ids'].includes(post['id'])) { // if post already liked, display an unlike button
                     d.innerHTML += `<button id="like__post_${post['id']}_button">Unlike</button>`
                     d.querySelector(`#like__post_${post['id']}_button`).addEventListener("click", () => like_post(d, post, "unlike"))

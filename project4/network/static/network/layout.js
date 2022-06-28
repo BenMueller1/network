@@ -8,19 +8,24 @@ document.addEventListener('DOMContentLoaded', function() {
      // this will only work properly when I transfer this code to the layout.js
     allPostsBtn.disabled = false
     allPostsBtn.addEventListener("click", () => {
+        window.onscroll = infinite_scroll
         posts_div.innerHTML = ""
         post_index = 0;
         load_ten_posts(post_index);
         allPostsBtn.disabled = true;
+        followingBtn.disabled = false;
     })
 
     followingBtn = document.querySelector('#following_button')
     if (followingBtn !== null) {  // have to do this bc it will be null if the user isn't logged in
         followingBtn.addEventListener("click", () => {
+            window.onscroll = infinite_scroll_following
+            post_index = 0
+            followingBtn.disabled = true;
             allPostsBtn.disabled = false;
             posts_div = document.querySelector('#posts')
             posts_div.innerHTML = ""
-            load_following_posts()
+            load_ten_following_posts(post_index)
         })
     }
 
@@ -46,14 +51,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // TODO: add an event listener that detects when we have scrolled to the bottom of the page and loads the next ten posts
-    window.onscroll = infinite_scroll    // this fn is declared at end of file
+        // this fn is declared at end of file
 
 });
 
 async function load_following_posts() {
     // fetch the current user (STUDY!!!!! notice how I used async and await)
     var usr = await fetch('/getUser').then(response => response.json())
-    
     fetch(`/getAllPostsFollowedBy/${usr["id"]}`)
     .then(response => response.json())
     .then(posts => {
@@ -63,10 +67,63 @@ async function load_following_posts() {
             d.innerHTML = `<p> <a href="profile/${post["user_id"]}">${post['user']}</a>
                                 : ${post['body']}, posted at ${post['datetime_posted']}. ${post['like_count']} likes.  
                             </p>`;
-            posts_div.append(d)           
+                            
+            if (usr['liked_post_ids'].includes(post['id'])) { // if post already liked, display an unlike button
+                d.innerHTML += `<button id="like__post_${post['id']}_button">Unlike</button>`
+                d.querySelector(`#like__post_${post['id']}_button`).addEventListener("click", () => like_post(d, post, "unlike"))
+            }
+            else {
+                d.innerHTML += `<button id="like__post_${post['id']}_button">Like</button>`
+                d.querySelector(`#like__post_${post['id']}_button`).addEventListener("click", () => like_post(d, post, "like"))
+            } 
+            
+            posts_div.append(d)
         })
     })
 }
+
+
+
+
+async function load_ten_following_posts(first_post_index) {
+    var usr = await fetch('/getUser').then(response => response.json())
+    fetch(`/getAllPostsFollowedBy/${usr["id"]}`)
+    .then(response => response.json())
+    .then(posts => {
+        numPosts = Object.keys(posts).length;
+        if (numPosts > first_post_index) {
+            // get a list of only the ten posts that we want
+            ten_posts = posts.slice(first_post_index, first_post_index+10)   // the end is noninclusive
+            // now display all posts
+            ten_posts.forEach((post) => {
+                let d = document.createElement('div');
+                d.id = `post-${post['id']}`
+                d.innerHTML = `<p> <a href="profile/${post["user_id"]}">${post['user']}</a>
+                                    : ${post['body']}, posted at ${post['datetime_posted']}. ${post['like_count']} likes.
+                                </p>`;
+                
+
+                if (usr['liked_post_ids'].includes(post['id'])) { // if post already liked, display an unlike button
+                    d.innerHTML += `<button id="like__post_${post['id']}_button">Unlike</button>`
+                    d.querySelector(`#like__post_${post['id']}_button`).addEventListener("click", () => like_post(d, post, "unlike"))
+                }
+                else {
+                    d.innerHTML += `<button id="like__post_${post['id']}_button">Like</button>`
+                    d.querySelector(`#like__post_${post['id']}_button`).addEventListener("click", () => like_post(d, post, "like"))
+                } 
+
+                posts_div.append(d)
+            })
+        } else {
+            let p = document.createElement('p');
+            p.innerHTML = "that's all from your followers :)"
+            remove_infinite_scroll()
+            posts_div.append(p)
+        }
+    })
+    post_index += 10; 
+}
+
 
 
 async function load_ten_posts(first_post_index) {
@@ -179,7 +236,12 @@ async function like_post(d, post, like_or_unlike) {
     })    
 }
 
-
+function infinite_scroll_following() {
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
+        console.log("loading more posts....")
+        load_ten_following_posts(post_index)
+    }
+}
 
 function infinite_scroll() {
     if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
