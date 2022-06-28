@@ -50,10 +50,10 @@ async function load_profile_posts(posts_div, user_id) {
 
 
 function edit_post(d, post) {
-    d.innerHTML = `<form >
+    d.innerHTML = `<span>
                         <input type="text" value="${post['body']}" name="edit-${post['id']}" id="new_body_text_for_${post['id']}">
                         <input id="submit_edit_${post['id']}" type="button" value="submit">
-                    </form>`
+                    </span>`
     d.querySelector(`#submit_edit_${post['id']}`).addEventListener("click", () => {
         var new_body = d.querySelector(`#new_body_text_for_${post['id']}`).value
         fetch(`../../update/${post['id']}`, {
