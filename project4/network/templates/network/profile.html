@@ -27,12 +27,6 @@
     
     <div id="profile_posts">
         <h5>posts: </h5>
-        {% for post in posts %}
-            <div id="post_{{post.id}}" class="post_div">
-                <p> {{post.body}}. posted at {{post.datetime_posted}} {{post.like_count}} likes. </p>
-                <button id="edit__post_{{post.id}}_button" class="edit_post_button"> Edit</button>
-            </div>
-        {% endfor %}
     </div>
 {% endblock %}
 

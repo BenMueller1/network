@@ -88,7 +88,8 @@ def profile(request, user_id):
     else:
         following = False
     
-    posts = get_all_posts_by_user(users_profile)
+    #posts = get_all_posts_by_user(users_profile)
+    posts=None
     context = {"users_profile": users_profile, "posts": posts, "viewing_user": viewing_user, "following": following}
     return render(request, "network/profile.html", context)
 
@@ -103,10 +104,11 @@ def get_all_posts(request):
     return JsonResponse([post.serialize() for post in posts], safe=False)
 
 
-def get_all_posts_by_user(user):
+def get_all_posts_by_user(request, user_id):
+    user = User.objects.filter(id=user_id)[0]
     posts = Post.objects.filter(user=user)
     posts = posts.order_by("-datetime_posted").all()
-    return posts
+    return JsonResponse([post.serialize() for post in posts], safe=False)
 
 
 def follow(request, followee_id):
@@ -139,7 +141,6 @@ def unfollow(request, unfollowee_id):
 
 
 def get_user(request):
-    # this is causing an error
     username = request.user.username
     id = request.user.id
     liked_posts = [like.post for like in request.user.likes.all()]
@@ -148,6 +149,17 @@ def get_user(request):
     return JsonResponse({
         "username": username,
         "id": id,
+        "liked_post_ids": js_liked_post_ids
+    })
+
+def get_user_by_id(request, user_id):
+    user = User.objects.filter(id=user_id)[0]
+    liked_posts = [like.post for like in user.likes.all()]
+    liked_post_ids = [post.id for post in liked_posts]
+    js_liked_post_ids = json.dumps(liked_post_ids)
+    return JsonResponse({
+        "username": user.username,
+        "id": user_id,
         "liked_post_ids": js_liked_post_ids
     })
 

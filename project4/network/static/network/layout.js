@@ -1,13 +1,15 @@
 var posts_div = document.querySelector('#posts')
-let post_index = 0;
+var post_index = 0
+
 
 document.addEventListener('DOMContentLoaded', function() {
     allPostsBtn = document.querySelector('#all_posts_button');
     posts_div = document.querySelector('#posts')
      // this will only work properly when I transfer this code to the layout.js
-    allPostsBtn.disabled = false;
+    allPostsBtn.disabled = false
     allPostsBtn.addEventListener("click", () => {
         posts_div.innerHTML = ""
+        post_index = 0;
         load_ten_posts(post_index);
         allPostsBtn.disabled = true;
     })
@@ -18,7 +20,6 @@ document.addEventListener('DOMContentLoaded', function() {
             allPostsBtn.disabled = false;
             posts_div = document.querySelector('#posts')
             posts_div.innerHTML = ""
-            post_index = 0
             load_following_posts()
         })
     }
@@ -40,8 +41,13 @@ document.addEventListener('DOMContentLoaded', function() {
             })
         }
     }
+    else {  // else we want to see all posts
+        allPostsBtn.click()
+    }
+    
+    // TODO: add an event listener that detects when we have scrolled to the bottom of the page and loads the next ten posts
+    window.onscroll = infinite_scroll    // this fn is declared at end of file
 
-    allPostsBtn.click()
 });
 
 async function load_following_posts() {
@@ -65,14 +71,16 @@ async function load_following_posts() {
 
 async function load_ten_posts(first_post_index) {
     var usr = await fetch('/getUser').then(response => response.json())
-    last_post_index = first_post_index+9; //inclusive
     posts_div = document.querySelector('#posts')
     fetch('/getAllPosts')
     .then(response => response.json())
     .then(posts => {
         numPosts = Object.keys(posts).length;
         if (numPosts > first_post_index) {
-            posts.forEach((post) => {
+            // get a list of only the ten posts that we want
+            ten_posts = posts.slice(first_post_index, first_post_index+10)   // the end is noninclusive
+            // now display all posts
+            ten_posts.forEach((post) => {
                 let d = document.createElement('div');
                 d.id = `post-${post['id']}`
                 d.innerHTML = `<p> <a href="profile/${post["user_id"]}">${post['user']}</a>
@@ -103,6 +111,7 @@ async function load_ten_posts(first_post_index) {
         } else {
             let p = document.createElement('p');
             p.innerHTML = "that's all the posts :)"
+            remove_infinite_scroll()
             posts_div.append(p)
         }
     })
@@ -168,4 +177,22 @@ async function like_post(d, post, like_or_unlike) {
             d.querySelector(`#like__post_${post['id']}_button`).addEventListener("click", () => like_post(d, post, "like"))
         } 
     })    
+}
+
+
+
+function infinite_scroll() {
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
+        console.log("loading more posts....")
+        load_ten_posts(post_index)
+    }
+}
+
+function remove_infinite_scroll() {
+    window.onscroll = do_nothing
+}
+
+function do_nothing() {
+    // this is just for fun
+    // I am aware that there are better ways to do this
 }
